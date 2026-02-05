@@ -28,6 +28,16 @@ functions:                          		# Sekcija koja definiše Lambda funkcije
           path: sync                		# Putanja: /sync
           method: get               		# HTTP metoda: GET
 
+  getChargersByTown:
+    handler: index2.handler
+    description: Get chargers from DynamoDB
+    role: GetChargersRole
+    events:
+      - http:
+          path: chargers/{town}
+          method: get
+
+
 resources:                          		# CloudFormation resursi sekcija
   Resources:                        		# AWS resursi za kreiranje
     ChargersTable:                  		# Logičko ime resursa 
@@ -98,6 +108,41 @@ resources:                          		# CloudFormation resursi sekcija
                     - dynamodb:Scan
                     - dynamodb:Query
                     - dynamodb:DeleteItem
+                  Resource:
+                    - !GetAtt ChargersTable.Arn                              # ARN tabele
+                    - !Join ['/', [!GetAtt ChargersTable.Arn, 'index/*']]    # ARN indeksa
+          - PolicyName: CloudWatchLogs    # Polisa za Lambda logove
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
+    # IAM rola za Lambda funkciju, nije potrebna kad je u pitanju localstack, ali treba za AWS
+    GetChargersRole:
+      Type: AWS::IAM::Role              # CloudFormation tip - IAM rola
+      Properties:
+        RoleName: getChargers-role-${sls:stage}     # Ime role vidljivo u LocalStack/AWS konzoli
+        AssumeRolePolicyDocument:       # Trust policy - ko može preuzeti ovu rolu
+          Version: "2012-10-17"
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com  # Lambda servis može preuzeti rolu
+              Action: sts:AssumeRole
+        Policies:                       # Inline polise priključene roli
+          - PolicyName: DynamoDBAccess    # Polisa za pristup DynamoDB
+            PolicyDocument:
+              Version: "2012-10-17"
+              Statement:
+                - Effect: Allow         # Dozvoli DynamoDB operacije
+                  Action:
+                    - dynamodb:GetItem
+                    - dynamodb:Scan
+                    - dynamodb:Query
                   Resource:
                     - !GetAtt ChargersTable.Arn                              # ARN tabele
                     - !Join ['/', [!GetAtt ChargersTable.Arn, 'index/*']]    # ARN indeksa
