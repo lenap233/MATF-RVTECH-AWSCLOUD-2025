@@ -17,7 +17,7 @@ provider:
 
 functions:                          		# Sekcija koja definiše Lambda funkcije
   syncOCMdata:                      		# Naziv funkcije (logički ID)
-    handler: index.handler          		# Fajl.nazivFunkcije (index.js exports.handler)
+    handler: index1.handler          		# Fajl.nazivFunkcije (index.js exports.handler)
     description: Sync data from Open Charge Map
     role: SyncOCMDataRole           		# Referenca na IAM rolu definisanu u resources
     events:                         		# Okidači za ovu funkciju
